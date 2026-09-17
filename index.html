@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Cuvée">
+<title>Cuvée</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#0a0a0a;color:#ede7db;font-family:-apple-system,sans-serif;max-width:500px;margin:0 auto;padding-bottom:72px;min-height:100vh}
+input{background:#111;border:.5px solid #222;border-radius:10px;padding:10px 14px;color:#ede7db;font-size:14px;width:100%;outline:none}
+button{cursor:pointer;border:none;background:none;color:inherit;font-family:inherit}
+.pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pill{padding:6px 14px;border-radius:20px;font-size:12px;white-space:nowrap;border:.5px solid #222;color:#666;background:#111;flex-shrink:0}
+.pill.on{background:#ede7db;color:#0a0a0a;border-color:#ede7db}
+.card{background:#111;border:.5px solid #1e1e1e;border-radius:12px;padding:12px 14px;margin-bottom:8px}
+.stat{background:#111;border:.5px solid #222;border-radius:12px;padding:14px 16px}
+.stat .v{font-size:26px;font-weight:300;letter-spacing:-1px}
+.stat .l{font-size:10px;color:#555;letter-spacing:2px;margin-top:2px}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:500px;background:#0a0a0a;border-top:.5px solid #151515;display:flex;padding:4px 0 20px}
+.navbtn{flex:1;padding:8px 0;font-size:10px;letter-spacing:1px;color:#444;border-top:1.5px solid transparent;text-align:center}
+.navbtn.on{color:#ede7db;border-top-color:#ede7db}
+.navbtn .ic{font-size:16px;margin-bottom:2px}
+.hdr{padding:24px 20px 14px;border-bottom:.5px solid #151515;display:flex;justify-content:space-between;align-items:baseline}
+.sec{padding:0 20px}
+.lbl{font-size:10px;color:#444;letter-spacing:2px;margin:16px 0 8px;display:block}
+.flag{font-size:10px;color:#888;background:#1a1a1a;padding:2px 7px;border-radius:10px;border:.5px solid #2a2a2a;margin:2px 2px 0 0;display:inline-block}
+.wdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:2px}
+.detail-overlay{position:fixed;inset:0;background:rgba(0,0,0,.95);z-index:100;overflow-y:auto;padding:20px}
+.star{font-size:20px;cursor:pointer;color:#333;padding:4px}
+.star.on{color:#ede7db}
+.bal-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid #151515}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.bar-track{flex:1;height:3px;background:#1a1a1a;border-radius:2px;overflow:hidden}
+.bar-fill{height:3px;border-radius:2px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ── Data ─────────────────────────────────────────────────────────────────────
+const RAW = [[1,"Domaine Armand Rousseau Gevrey-Chambertin","Burgundy","2024",3,550,"Cellar","Red","750ml"],[2,"Domaine Armand Rousseau Charmes-Chambertin Grand Cru","Burgundy","2024",3,850,"Cellar","Red","750ml"],[3,"Domaine Armand Rousseau Chambertin Clos de B\u00e8ze Grand Cru","Burgundy","2023",3,3500,"Hold 10+ yrs","Red","750ml"],[4,"Domaine Armand Rousseau Chambertin Grand Cru","Burgundy","2020",1,3800,"Cellar","Red","750ml"],[5,"Domaine Armand Rousseau Charmes-Chambertin Grand Cru","Burgundy","2012",1,1299,"Drink now","Red","750ml"],[6,"Domaine Armand Rousseau Ruchottes-Chambertin GC Clos des Ruchottes","Burgundy","2022",3,1350,"Cellar","Red","750ml"],[7,"Domaine G. Roumier Bonnes-Mares Grand Cru","Burgundy","1983",1,7600,"Drink now","Red","750ml"],[8,"Jacky Truchot Charmes-Chambertin Grand Cru","Burgundy","1983",1,9625,"Drink now","Red","750ml"],[9,"Domaine Leroy Echezeaux Grand Cru","Burgundy","1969",1,3436,"Drink now","Red","750ml"],[10,"Ren\u00e9 Engel Echezeaux Grand Cru","Burgundy","2002",1,4319,"Drink now","Red","750ml"],[11,"Domaine Dujac Vosne-Roman\u00e9e 1er Cru Aux Malconsorts","Burgundy","2022",4,700,"Cellar","Red","750ml"],[12,"Domaine Dujac Vosne-Roman\u00e9e 1er Cru Aux Malconsorts","Burgundy","2019",4,900,"Cellar","Red","750ml"],[13,"Domaine Dujac Vosne-Roman\u00e9e 1er Cru Aux Malconsorts","Burgundy","2018",4,650,"Drink soon","Red","750ml"],[14,"Domaine M\u00e9o-Camuzet NSG 1er Cru Aux Boudots","Burgundy","2021",6,294,"Cellar","Red","750ml"],[15,"Domaine M\u00e9o-Camuzet Vosne-Roman\u00e9e 1er Cru Les Beaux Monts","Burgundy","2021",6,469,"Cellar","Red","750ml"],[16,"Emmanuel Rouget Echezeaux Grand Cru","Burgundy","2023",4,595,"Cellar","Red","750ml"],[17,"Emmanuel Rouget Vosne-Roman\u00e9e","Burgundy","2023",1,265,"Cellar","Red","750ml"],[18,"Marquis d'Angerville Volnay 1er Cru Taillepieds","Burgundy","2021",2,225,"Cellar","Red","750ml"],[19,"Marquis d'Angerville Volnay 1er Cru Clos des Ducs","Burgundy","2021",2,350,"Cellar","Red","750ml"],[20,"Marquis d'Angerville Volnay 1er Cru Clos des Ducs","Burgundy","2022",2,400,"Cellar","Red","750ml"],[21,"Marquis d'Angerville Volnay 1er Cru Clos des Ducs","Burgundy","1989",1,650,"Drink now","Red","750ml"],[22,"Marquis d'Angerville Volnay 1er Cru Champans","Burgundy","2022",1,500,"Cellar","Red","1.5L"],[23,"Domaine Duroch\u00e9 Clos Vougeot Grand Cru","Burgundy","2022",1,525,"Cellar","Red","750ml"],[24,"Domaine Forey Clos Vougeot Grand Cru","Burgundy","2023",2,325,"Cellar","Red","750ml"],[25,"Domaine Forey Vosne-Roman\u00e9e 1er Cru Les Gaudichots","Burgundy","2023",1,450,"Cellar","Red","750ml"],[26,"Domaine Forey Vosne-Roman\u00e9e Menhir","Burgundy","2023",1,145,"Cellar","Red","750ml"],[27,"Domaine Forey Vosne-Roman\u00e9e","Burgundy","2023",2,115,"Cellar","Red","750ml"],[28,"Domaine Forey Nuits-Saint-Georges 1er Cru Les Perri\u00e8res","Burgundy","2023",2,150,"Cellar","Red","750ml"],[29,"Domaine Forey Nuits-Saint-Georges","Burgundy","2023",2,110,"Cellar","Red","750ml"],[30,"Domaine Forey Gevrey-Chambertin La Justice","Burgundy","2023",2,110,"Cellar","Red","750ml"],[31,"Domaine Forey Morey-Saint-Denis","Burgundy","2023",2,86,"Cellar","Red","750ml"],[32,"Petit-Roy Savigny-l\u00e8s-Beaune 1er Cru Lavi\u00e8res","Burgundy","2023",6,120,"Cellar","Red","750ml"],[34,"Bouchard P\u00e8re et Fils Nuits-Saint-Georges Les Damodes","Burgundy","2005",2,175,"Drink now","Red","750ml"],[36,"Jacques-Fr\u00e9d\u00e9ric Mugnier NSG 1er Cru Clos de la Mar\u00e9chale","Burgundy","2013",1,215,"Drink now","Red","750ml"],[37,"Nicolas Potel Clos Saint-Denis Grand Cru","Burgundy","2002",1,280,"Drink now","Red","750ml"],[39,"Denis Bachelet Gevrey-Chambertin Les Corbeaux","Burgundy","2010",1,350,"Drink soon","Red","750ml"],[40,"Clos des Lambrays Grand Cru","Burgundy","1990",7,403,"Drink now","Red","750ml"],[41,"Raveneau Chablis Valmur Grand Cru","Burgundy","2000",9,529,"Drink now","White","750ml"],[42,"Prieur\u00e9 Roch NSG Clos des Corv\u00e9es","Burgundy","2006",12,599,"Drink now","Red","750ml"],[43,"Prieur\u00e9 Roch NSG 1er Cru Vieilles Vignes","Burgundy","2010",6,639,"Drink soon","Red","750ml"],[44,"Prieur\u00e9 Roch Vosne-Roman\u00e9e Les Hautes Maizi\u00e8res","Burgundy","2010",6,799,"Drink soon","Red","750ml"],[45,"Prieur\u00e9 Roch Vosne-Roman\u00e9e Les Suchots","Burgundy","2009",6,1064,"Drink soon","Red","750ml"],[46,"Domaine Jean-Louis Chave Hermitage Blanc","Rh\u00f4ne","2022",4,325,"Cellar","White","750ml"],[47,"Domaine Jean-Louis Chave Hermitage Blanc","Rh\u00f4ne","2022",1,725,"Cellar","White","1.5L"],[48,"Domaine Jean-Louis Chave Hermitage Blanc","Rh\u00f4ne","2009",3,350,"Drink soon","White","750ml"],[49,"Domaine Jean-Louis Chave Hermitage Blanc","Rh\u00f4ne","1991",5,675,"Drink now","White","750ml"],[50,"Cerbaiona Brunello di Montalcino","Tuscany","2006",6,156,"Drink soon","Red","750ml"],[51,"Cerbaiona Brunello di Montalcino","Tuscany","2007",5,156,"Drink soon","Red","750ml"],[52,"Cerbaiona Brunello di Montalcino","Tuscany","2009",6,156,"Drink soon","Red","750ml"],[53,"Cerbaiona Brunello di Montalcino","Tuscany","2010",6,433,"Cellar","Red","750ml"],[54,"Cerbaiona Brunello di Montalcino","Tuscany","2010",6,433,"Cellar","Red","750ml"],[55,"Cerbaiona Brunello di Montalcino","Tuscany","2011",6,117,"Cellar","Red","750ml"],[56,"Cerbaiona Brunello di Montalcino","Tuscany","2012",6,117,"Cellar","Red","750ml"],[57,"Cerbaiona Brunello di Montalcino","Tuscany","2013",5,117,"Cellar","Red","750ml"],[58,"Cerbaiona Brunello di Montalcino","Tuscany","2016",6,117,"Hold 10+ yrs","Red","750ml"],[59,"Cerbaiona Brunello di Montalcino","Tuscany","2017",2,250,"Cellar","Red","1.5L"],[60,"Pian dell'Orino Brunello Vigneti del Versante","Tuscany","2020",6,150,"Cellar","Red","750ml"],[61,"Pian dell'Orino Brunello Bassolino di Sopra","Tuscany","2019",6,475,"Hold 10+ yrs","Red","750ml"],[64,"Bartolo Mascarello Barolo Chinato","Piedmont","NV",1,125,"Drink now","Red","500ml"],[65,"Bartolo Mascarello Barbera d'Alba","Piedmont","2023",1,95,"Drink now","Red","750ml"],[66,"Bartolo Mascarello Dolcetto d'Alba","Piedmont","2024",2,60,"Drink now","Red","750ml"],[67,"Giacomo Conterno Barolo Arione","Piedmont","2021",2,325,"Cellar","Red","750ml"],[68,"Giacomo Conterno Barolo Cerretta","Piedmont","2016",1,350,"Cellar","Red","750ml"],[69,"Giacomo Conterno Barolo Cerretta","Piedmont","2018",2,300,"Cellar","Red","750ml"],[70,"Giacomo Conterno Barolo Cerretta","Piedmont","2018",1,675,"Cellar","Red","1.5L"],[71,"Giacomo Conterno Barolo Cerretta","Piedmont","2019",2,300,"Cellar","Red","750ml"],[72,"Giacomo Conterno Barolo Cerretta","Piedmont","2020",2,290,"Cellar","Red","750ml"],[73,"Giacomo Conterno Barolo Cerretta","Piedmont","2021",2,350,"Hold 10+ yrs","Red","750ml"],[74,"Giacomo Conterno Barolo Cerretta","Piedmont","2021",1,700,"Hold 10+ yrs","Red","1.5L"],[75,"Giacomo Conterno Barolo Riserva Monfortino","Piedmont","2015",1,1225,"Hold 10+ yrs","Red","750ml"],[76,"Giacomo Conterno Barolo Francia","Piedmont","2021",2,325,"Cellar","Red","750ml"],[77,"Roagna Barbaresco Montefico Vecchie Viti","Piedmont","2017",1,375,"Cellar","Red","750ml"],[78,"Roagna Barbaresco Paj\u00e8 Vecchie Viti","Piedmont","2018",2,175,"Cellar","Red","750ml"],[79,"Roagna Barolo Rocche di Castiglione","Piedmont","2019",3,65,"Cellar","Red","750ml"],[80,"Brovia Barolo","Piedmont","2021",2,65,"Cellar","Red","750ml"],[81,"Produttori del Barbaresco Riserva Ovello","Piedmont","2013",1,150,"Drink soon","Red","750ml"],[82,"Produttori del Barbaresco Riserva Montefico","Piedmont","2013",2,155,"Drink soon","Red","750ml"],[83,"Produttori del Barbaresco Riserva Montefico","Piedmont","2011",2,165,"Drink soon","Red","750ml"],[84,"Vietti Barbaresco Masseria Roncaglie","Piedmont","2018",2,108,"Cellar","Red","750ml"],[85,"Vietti Barbaresco Masseria Roncaglie","Piedmont","2019",1,450,"Cellar","Red","1.5L"],[86,"G.B. Burlotto Barolo","Piedmont","2021",1,120,"Cellar","Red","750ml"],[87,"G.B. Burlotto Barolo Acclivi","Piedmont","2021",2,113,"Cellar","Red","750ml"],[88,"G.B. Burlotto Barolo Monvigliero","Piedmont","2020",1,400,"Hold 10+ yrs","Red","750ml"],[89,"Vega Sicilia \u00danico","Spain","2015",6,550,"Hold 10+ yrs","Red","750ml"],[90,"Vega Sicilia \u00danico","Spain","2016",6,550,"Hold 10+ yrs","Red","750ml"],[91,"Vega Sicilia \u00danico Reserva Especial","Spain","2010/11/12",6,700,"Drink soon","Red","750ml"],[92,"Vega Sicilia \u00danico Reserva Especial","Spain","2011/12/13",6,700,"Drink soon","Red","750ml"],[93,"Sea Smoke Southing Pinot Noir","California","2024",6,95,"Drink now","Red","750ml"],[94,"Sea Smoke Ten Pinot Noir","California","2024",6,95,"Drink now","Red","750ml"],[95,"Sea Smoke Southing Pinot Noir","California","2024",3,210,"Drink now","Red","1.5L"],[96,"Sea Smoke Ten Pinot Noir","California","2024",3,210,"Drink now","Red","1.5L"],[97,"Peter Michael Les Pavots Estate Cabernet Blend","California","2023",4,235,"Cellar","Red","750ml"],[98,"Peter Michael Les Pavots Estate Cabernet Blend","California","2023",1,565,"Cellar","Red","1.5L"],[99,"Peter Michael Le Caprice Estate Pinot Noir","California","2024",6,145,"Drink now","Red","750ml"],[100,"Peter Michael Le Caprice Estate Pinot Noir","California","2024",2,350,"Drink now","Red","1.5L"],[101,"Peter Michael Le Moulin Rouge Pinot Noir","California","2024",6,130,"Drink now","Red","750ml"],[102,"Harlan Estate The Maiden","California","2015",1,275,"Cellar","Red","750ml"],[103,"Harlan Estate","California","2016",3,1700,"Hold 10+ yrs","Red","750ml"],[104,"Serragghia Fanino Catarratto e Pignatello","Sicily","2022",2,150,"Drink soon","Red","750ml"],[105,"Serragghia Heritage Bianco Zibibbo Vino Secco","Sicily","2019",1,105,"Drink soon","Orange","750ml"],[106,"Dom P\u00e9rignon Vintage","Champagne","2015",3,300,"Drink now","Sparkling","750ml"],[107,"Dom P\u00e9rignon Vintage","Champagne","2013",1,340,"Drink soon","Sparkling","750ml"],[108,"Laurent-Perrier Grand Si\u00e8cle N\u00b026","Champagne","NV",1,265,"Drink now","Sparkling","750ml"],[109,"Bonnet-Ponson Cuv\u00e9e Perp\u00e9tuelle Ros\u00e9","Champagne","NV",1,80,"Drink now","Sparkling","750ml"],[110,"Thierry Allemand Cornas Reynard","Rh\u00f4ne","2005",2,890,"Drink now","Red","1.5L"],[111,"Thierry Allemand Cornas Reynard","Rh\u00f4ne","2008",2,425,"Drink soon","Red","750ml"],[112,"Thierry Allemand Cornas Reynard","Rh\u00f4ne","2009",3,425,"Drink soon","Red","750ml"],[113,"Thierry Allemand Cornas Chaillot","Rh\u00f4ne","2008",3,325,"Drink soon","Red","750ml"],[114,"Thierry Allemand Cornas Chaillot","Rh\u00f4ne","2009",3,350,"Drink soon","Red","750ml"],[115,"Thierry Allemand Cornas Reynard","Rh\u00f4ne","2010",3,425,"Cellar","Red","750ml"],[116,"Thierry Allemand Cornas Chaillot","Rh\u00f4ne","2010",3,375,"Cellar","Red","750ml"],[117,"Thierry Allemand Cornas Reynard","Rh\u00f4ne","2010",2,875,"Cellar","Red","1.5L"],[118,"Thierry Allemand Cornas Chaillot","Rh\u00f4ne","2010",1,850,"Cellar","Red","1.5L"],[119,"Michel Lafarge Beaune 1er Cru Clos des Aigrots","Burgundy","2019",6,165,"Cellar","Red","750ml"],[120,"Domaine Jean Grivot Clos Vougeot Grand Cru","Burgundy","2022",2,400,"Cellar","Red","750ml"],[121,"Philine Isabelle Barolo","Piedmont","2022",1,245,"Hold 10+ yrs","Red","750ml"],[122,"Domaine Jean Grivot Vosne-Roman\u00e9e","Burgundy","2023",1,145,"Cellar","Red","750ml"],[123,"Domaine Dujac Vosne-Roman\u00e9e 1er Cru Les Beaux Monts","Burgundy","2015",1,699,"Drink soon","Red","750ml"],[125,"Domaine Comte Georges de Vog\u00fc\u00e9 Chambolle-Musigny","Burgundy","2010",7,600,"Drink soon","Red","750ml"],[126,"Domaine Comte Georges de Vog\u00fc\u00e9 Chambolle-Musigny 1er Cru","Burgundy","2009",7,800,"Drink soon","Red","750ml"],[127,"Domaine Comte Georges de Vog\u00fc\u00e9 Musigny Cuv\u00e9e Vieilles Vignes","Burgundy","2022",7,1100,"Cellar","Red","750ml"],[128,"Domaine Comte Georges de Vog\u00fc\u00e9 Musigny Cuv\u00e9e Vieilles Vignes","Burgundy","2023",1,2900,"Hold 10+ yrs","Red","1.5L"],[129,"Antoine Lienhardt Gevrey-Chambertin","Burgundy","2023",2,175,"Cellar","Red","750ml"],[130,"Antoine Lienhardt Nuits-Saint-Georges","Burgundy","2023",1,145,"Cellar","Red","750ml"],[131,"Antoine Lienhardt C\u00f4te de Nuits-Villages Aux Vignottes","Burgundy","2023",1,85,"Drink soon","Red","750ml"],[132,"Domaine Leflaive Puligny-Montrachet Clavoillon","Burgundy","1996",10,350,"Drink now","White","750ml"],[133,"Krug Vintage","Champagne","2004",6,367,"Drink now","Sparkling","750ml"],[134,"Giacomo Conterno Barolo Francia","Piedmont","2016",12,200,"Cellar","Red","750ml"],[135,"Giuseppe Mascarello Barolo Monprivato","Piedmont","2010",1,240,"Drink soon","Red","750ml"],[136,"Giuseppe Mascarello Barolo Monprivato","Piedmont","2014",4,175,"Cellar","Red","750ml"],[137,"Produttori del Barbaresco Asili Riserva","Piedmont","2016",6,70,"Cellar","Red","750ml"],[138,"Produttori del Barbaresco Montestefano Riserva","Piedmont","2016",15,75,"Cellar","Red","750ml"],[139,"Produttori del Barbaresco Ovello Riserva","Piedmont","2016",2,60,"Cellar","Red","750ml"],[140,"Produttori del Barbaresco Pora Riserva","Piedmont","2016",12,58,"Cellar","Red","750ml"],[141,"Produttori del Barbaresco Rabaja Riserva","Piedmont","2016",12,80,"Cellar","Red","750ml"],[142,"Domaine Armand Rousseau Chambertin Clos de B\u00e8ze","Burgundy","2014/2016/2020",3,2365,"Cellar","Red","750ml"],[143,"Domaine Dujac Clos de la Roche","Burgundy","2015/2018",2,788,"Cellar","Red","750ml"],[144,"Domaine Dujac Clos de la Roche","Burgundy","2020",2,788,"Cellar","Red","750ml"],[145,"Domaine Dujac Morey-Saint-Denis","Burgundy","2020",3,158,"Cellar","Red","750ml"],[146,"Domaine Dujac Vosne-Roman\u00e9e Aux Malconsorts","Burgundy","2014/2017/2018",3,500,"Cellar","Red","750ml"],[147,"Georges Noellat Nuits-Saint-Georges Aux Cras","Burgundy","2014",2,188,"Drink soon","Red","750ml"],[148,"Georges Noellat Vosne-Roman\u00e9e Les Chaumes","Burgundy","2016/2019/2020",7,179,"Cellar","Red","750ml"],[149,"Georges Noellat Vosne-Roman\u00e9e Les Petits Monts","Burgundy","2016",1,376,"Cellar","Red","1.5L"],[150,"Sylvain Cathiard Vosne-Roman\u00e9e Aux Malconsorts","Burgundy","2015/2016",2,945,"Cellar","Red","750ml"],[151,"Sylvain Cathiard Vosne-Roman\u00e9e Aux Malconsorts","Burgundy","2017",1,756,"Cellar","Red","750ml"],[152,"Sylvain Cathiard Vosne-Roman\u00e9e Aux Malconsorts","Burgundy","2018/2019/2020",3,788,"Cellar","Red","750ml"],[153,"Sylvain Cathiard Vosne-Roman\u00e9e Aux Reignots","Burgundy","2017/2018/2019/2020",4,750,"Cellar","Red","750ml"],[154,"Domaine de Montille Vosne-Roman\u00e9e Aux Malconsorts","Burgundy","2016",1,552,"Cellar","Red","1.5L"],[155,"J.-F. Coche-Dury Auxey-Duresses Rouge","Burgundy","2017/2018/2019",4,238,"Drink soon","Red","750ml"],[156,"Domaine Georges Roumier Chambolle-Musigny Les Cras","Burgundy","2001",2,788,"Drink now","Red","750ml"],[157,"Domaine Georges Roumier Morey-Saint-Denis Clos de la Bussi\u00e8re","Burgundy","2006",5,378,"Drink soon","Red","750ml"],[158,"Domaine Georges Roumier Bourgogne Rouge","Burgundy","2012/2013/2014/2015",12,289,"Drink soon","Red","750ml"],[159,"Vincent Dauvissat Chablis Grand Cru Les Preuses","Burgundy","2019",1,399,"Cellar","White","750ml"],[160,"Giuseppe Rinaldi Barolo Brunate","Piedmont","2011",2,499,"Cellar","Red","750ml"],[161,"Domaine Labet C\u00f4tes du Jura Chardonnay Bajocien","Jura","2020",3,165,"Drink soon","White","750ml"],[162,"Domaine Labet C\u00f4tes du Jura Chardonnay du Hasard Vin de Voile","Jura","2018",2,185,"Drink soon","White","750ml"],[163,"Domaine Labet C\u00f4tes du Jura Pinot Noir Les Varrons","Jura","2023",3,155,"Drink soon","Red","750ml"],[164,"Domaine Labet C\u00f4tes du Jura M\u00e9tis","Jura","2023",3,155,"Drink soon","White","750ml"],[165,"Domaine Armand Rousseau Chambertin Grand Cru","Burgundy","2019",1,3500,"Hold 10+ yrs","Red","750ml"],[166,"Dom P\u00e9rignon Vintage","Champagne","2002",2,349,"Drink now","Sparkling","750ml"],[167,"Antoine Jobard Meursault Premier Cru Genevri\u00e8res","Burgundy","2023",6,450,"Cellar","White","750ml"],[168,"Antoine Jobard Meursault Premier Cru Poruzots","Burgundy","2023",3,245,"Cellar","White","750ml"],[169,"Antoine Jobard Meursault Premier Cru Charmes","Burgundy","2023",3,295,"Cellar","White","750ml"],[170,"Antoine Jobard Meursault","Burgundy","2023",6,150,"Drink soon","White","750ml"],[171,"Antoine Jobard Saint-Aubin Premier Cru Sur le Sentier du Clou","Burgundy","2023",3,150,"Cellar","White","750ml"],[172,"Cerbaiona Brunello di Montalcino","Tuscany","1982",1,550,"Drink now","Red","750ml"],[173,"Luciano Sandrone Barolo Cannubi Boschis","Piedmont","2010",1,350,"Cellar","Red","750ml"],[174,"Luciano Sandrone Barolo Cannubi Boschis","Piedmont","2008",1,350,"Drink soon","Red","750ml"],[175,"Vietti Barolo Brunate","Piedmont","2010",1,350,"Cellar","Red","750ml"],[176,"Cavallotto Barolo Riserva Vignolo","Piedmont","1998",1,345,"Drink now","Red","750ml"],[177,"Produttori del Barbaresco Barbaresco","Piedmont","1996",4,160,"Drink now","Red","750ml"],[178,"Cappellano Barolo Pi\u00e9 Rupestris","Piedmont","1999",3,1250,"Drink now","Red","750ml"],[179,"Cappellano Barolo Pi\u00e9 Rupestris","Piedmont","2008",3,695,"Drink soon","Red","750ml"],[180,"Cappellano Barolo Pi\u00e9 Rupestris","Piedmont","2010",2,850,"Cellar","Red","750ml"],[181,"Cappellano Barolo Otin Fiorin Pi\u00e9 Rupestris","Piedmont","2011",4,495,"Cellar","Red","750ml"],[182,"Cappellano Barolo Otin Fiorin Pi\u00e9 Franco","Piedmont","2013",1,2750,"Hold 10+ yrs","Red","750ml"],[183,"Cappellano Barolo Otin Fiorin Pi\u00e9 Franco","Piedmont","2016",1,2250,"Hold 10+ yrs","Red","1.5L"],[184,"Cappellano Barolo Otin Fiorin Pi\u00e9 Rupestris","Piedmont","2021",6,285,"Hold 10+ yrs","Red","750ml"],[185,"Bartolo Mascarello Barolo","Piedmont","1999",2,176,"Drink now","Red","750ml"],[188,"Bartolo Mascarello Barolo","Piedmont","2009",2,176,"Drink soon","Red","750ml"],[189,"Bartolo Mascarello Barolo","Piedmont","2017",3,176,"Cellar","Red","750ml"],[190,"Bartolo Mascarello Barolo","Piedmont","2018",2,176,"Cellar","Red","750ml"],[191,"Bartolo Mascarello Barolo","Piedmont","2019",3,176,"Hold 10+ yrs","Red","750ml"],[192,"Bartolo Mascarello Barolo","Piedmont","2020",3,176,"Hold 10+ yrs","Red","750ml"],[193,"Giuseppe Mascarello Barolo Monprivato Ca d\\'Morissio Riserva","Piedmont","2010",1,475,"Hold 10+ yrs","Red","750ml"],[194,"Giuseppe Mascarello Barolo Monprivato Ca d\\'Morissio Riserva","Piedmont","2012",6,475,"Cellar","Red","750ml"],[195,"Giuseppe Mascarello Barolo Monprivato Ca d\\'Morissio Riserva","Piedmont","2014",3,475,"Cellar","Red","750ml"],[196,"Bruno Giacosa Barolo Le Rocche del Falletto Riserva","Piedmont","2001",4,625,"Drink now","Red","750ml"],[197,"Giacomo Conterno Barolo Riserva Monfortino","Piedmont","2001",3,1333,"Drink soon","Red","750ml"],[198,"G.B. Burlotto Barolo Monvigliero","Piedmont","2020",6,292,"Cellar","Red","750ml"],[199,"Roagna Barbaresco Montefico Vecchie Viti","Piedmont","2019",6,292,"Cellar","Red","750ml"],[200,"Domaine Armand Rousseau Gevrey-Chambertin Clos St. Jacques","Burgundy","2019",6,1875,"Cellar","Red","750ml"],[201,"Domaine Jean-Louis Chave Hermitage Rouge","Rh\u00f4ne","2010",12,625,"Cellar","Red","750ml"],[202,"Sylvain Cathiard Roman\u00e9e St. Vivant","Burgundy","2005",3,2500,"Drink soon","Red","750ml"],[203,"Domaine Tempier Bandol Ros\u00e9","Provence","2025",11,70,"Drink now","Ros\u00e9","750ml"],[205,"Dauvissat Chablis Les Preuses Grand Cru","Burgundy","2020",7,495,"Cellar","White","750ml"],[206,"Raveneau Chablis Premier Cru Les Forets","Burgundy","2020",3,475,"Cellar","White","750ml"],[207,"Raveneau Chablis Premier Cru Les Forets","Burgundy","2022",4,500,"Cellar","White","750ml"],[208,"Dauvissat Chablis","Burgundy","2020",8,150,"Drink soon","White","750ml"],[209,"Raveneau Chablis Premier Cru Butteaux","Burgundy","2023",3,475,"Cellar","White","750ml"],[210,"Dauvissat Chablis Premier Cru Sechet","Burgundy","2022",5,215,"Cellar","White","750ml"],[211,"Raveneau Chablis Premier Cru Mont Mains","Burgundy","2022",2,500,"Cellar","White","750ml"],[212,"Produttori del Barbaresco Barbaresco Riserva Montestefano","Piedmont","1990",2,350,"Drink now","Red","750ml"],[213,"Domaine Roulot Meursault Premier Cru Clos des Boucheres","Burgundy","2011",6,550,"Drink soon","White","750ml"],[214,"Domaine G. Roumier Morey-Saint-Denis Premier Cru Clos de la Bussiere","Burgundy","2017",3,375,"Cellar","Red","750ml"],[215,"Marquis d'Angerville Volnay Premier Cru Clos des Ducs","Burgundy","2014",6,250,"Cellar","Red","750ml"],[216,"Marquis d'Angerville Volnay Premier Cru Clos des Ducs","Burgundy","2015",6,275,"Cellar","Red","750ml"],[217,"Marquis d'Angerville Volnay Premier Cru Caillerets","Burgundy","2013",12,175,"Drink soon","Red","750ml"],[218,"Marquis d'Angerville Volnay Premier Cru Caillerets","Burgundy","2014",11,175,"Drink soon","Red","750ml"],[219,"Domaine Armand Rousseau Chambertin Grand Cru","Burgundy","1996",1,3400,"Drink now","Red","750ml"],[220,"Domaine Armand Rousseau Chambertin Clos de Beze Grand Cru","Burgundy","1986",1,2500,"Drink now","Red","750ml"],[221,"Rene Engel Vosne-Romanee Premier Cru Brulees","Burgundy","1993",2,1500,"Drink now","Red","750ml"],[222,"Jacky Truchot Chambolle-Musigny Premier Cru Les Sentiers","Burgundy","2005",1,2800,"Drink soon","Red","750ml"],[223,"Domaine G. Roumier Chambolle-Musigny Premier Cru Les Amoureuses","Burgundy","2024",3,3595,"Hold 10+ yrs","Red","750ml"],[224,"Domaine G. Roumier Morey-Saint-Denis Premier Cru Clos de la Bussiere","Burgundy","2024",6,320,"Hold 10+ yrs","Red","750ml"],[225,"Domaine G. Roumier Chambolle-Musigny","Burgundy","2024",6,350,"Cellar","Red","750ml"],[226,"Domaine Dujac Charmes-Chambertin Grand Cru","Burgundy","2016",6,595,"Cellar","Red","750ml"],[228,"Raveneau Chablis Premier Cru Montee de Tonnerre","Burgundy","2016",1,570,"Cellar","White","750ml"],[229,"Peter Michael L'Esprit des Pavots Estate Cabernet Blend","California","2023",6,125,"Cellar","Red","750ml"],[230,"Peter Michael Au Paradis Estate Cabernet Sauvignon","California","2023",6,245,"Cellar","Red","750ml"],[231,"Peter Michael Au Paradis Estate Cabernet Sauvignon","California","2023",2,590,"Cellar","Red","1.5L"],[232,"Peter Michael Clos du Ciel Estate Pinot Noir","California","2024",6,160,"Drink soon","Red","750ml"],[233,"Peter Michael Clos du Ciel Estate Pinot Noir","California","2024",2,385,"Drink soon","Red","1.5L"],[234,"Peter Michael Ma Danseuse Estate Pinot Noir","California","2024",6,145,"Drink soon","Red","750ml"],[235,"Peter Michael Ma Danseuse Estate Pinot Noir","California","2024",2,350,"Drink soon","Red","1.5L"],[236,"Peter Michael Le Chapeau Blanc Estate Cabernet Franc","California","2023",1,335,"Cellar","Red","750ml"],[237,"Peter Michael Le Chapeau Blanc Estate Cabernet Franc","California","2023",2,805,"Cellar","Red","1.5L"],[238,"Cappellano Barolo Otin Fiorin Pie Franco","Piedmont","1997",1,750,"Cellar","Red","750ml"],[239,"Gaja Barbaresco Sori San Lorenzo","Piedmont","2001",12,333,"Cellar","Red","750ml"],[240,"Gaja Barbaresco Sori San Lorenzo","Piedmont","2004",6,367,"Cellar","Red","750ml"],[241,"Gaja Barbaresco Sori San Lorenzo","Piedmont","2004",6,400,"Cellar","Red","750ml"],[242,"Gaja Barbaresco Sori Tildin","Piedmont","1997",6,367,"Cellar","Red","750ml"],[243,"Gaja Barbaresco Sori Tildin","Piedmont","1997",2,850,"Cellar","Red","1.5L"],[244,"Gaja Barbaresco Sori Tildin","Piedmont","2001",1,800,"Cellar","Red","1.5L"],[245,"Gaja Barbaresco Sori Tildin","Piedmont","2004",6,333,"Cellar","Red","750ml"],[246,"Gaja Barbaresco Sori Tildin","Piedmont","2004",6,333,"Cellar","Red","750ml"],[247,"Domaine J.F. Mugnier Musigny Grand Cru","Burgundy","1996",1,1400,"Cellar","Red","750ml"],[248,"Domaine J.F. Mugnier Musigny Grand Cru","Burgundy","1999",1,1800,"Drink soon","Red","750ml"],[249,"Giacomo Conterno Barolo Riserva Monfortino","Piedmont","2020",12,800,"Hold 10+ yrs","Red","750ml"],[250,"Giacomo Conterno Barolo Riserva Monfortino","Piedmont","2019",12,900,"Hold 10+ yrs","Red","750ml"],[251,"Domaine de la Romanee-Conti Romanee Saint-Vivant Grand Cru","Burgundy","2023",1,3700,"Hold 10+ yrs","Red","750ml"],[252,"Domaine de la Romanee-Conti Richebourg Grand Cru","Burgundy","2023",1,4000,"Hold 10+ yrs","Red","750ml"]];
+// [id, name, region, vintage, qty, price, window, colour, size]
+const I={ID:0,N:1,R:2,V:3,Q:4,P:5,W:6,C:7,S:8};
+
+const PRIO_BURG = ["Rousseau","Roumier","Leroy","Romanee-Conti","Mugnier","Vogüé","Dujac","Cathiard","Liger-Belair","Coche-Dury","Roulot","Raveneau","Dauvissat","Grivot","Prieuré Roch","Prieure Roch"];
+const PRIO_PIED = ["Rinaldi","Gaja","Vietti","Conterno","Cappellano","Mascarello","Giacosa","Roagna","Valfaccenda","Fontana"];
+const NATURAL = ["Cappellano","Prieuré Roch","Roagna","Valfaccenda","Fontana","Overnoy","Ganevat","Foradori","Gravner","Radikon"];
+const PRIO_VIN = {Burgundy:["1996","1999","2002","2005","2009","2010","2015","2016","2019"],Piedmont:["1978","1982","1985","1989","1990","1996","1997","2001","2004","2010","2013","2016"],Rhône:["1990","1999","2003","2010"]};
+const BIRTH = "1983";
+const RC={Burgundy:"#4a78d6",Piedmont:"#d66a34",California:"#d6a820",Tuscany:"#34a874",Rhône:"#d63434",Spain:"#7a4aaa",Champagne:"#aaa880",Jura:"#34a834",Provence:"#d67ab8",Sicily:"#aaa880"};
+const WC={
+  "Drink now":{bg:"#2d0a0a",bd:"#8b2020",tx:"#e24b4a"},
+  "Drink soon":{bg:"#2d1f0a",bd:"#8b5a20",tx:"#ef9f27"},
+  "Cellar":{bg:"#0a1f2d",bd:"#205a8b",tx:"#4a9fe2"},
+  "Hold 10+ yrs":{bg:"#0a0a2d",bd:"#20208b",tx:"#7a7ae2"}
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = {
+  tab: "cellar",
+  search: "",
+  fRegion: "All",
+  fWindow: "All",
+  fColour: "All",
+  sort: "region",
+  cellar: RAW.map(r => [...r]),
+  drunk: [],
+  detail: null,
+  rating: 0,
+  dNotes: ""
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function flags(w) {
+  const f = [];
+  if (w[I.V] === BIRTH) f.push("🎂 1983");
+  const allP = [...PRIO_BURG, ...PRIO_PIED];
+  if (allP.some(p => w[I.N].includes(p))) f.push("⭐ Priority");
+  if (NATURAL.some(p => w[I.N].includes(p))) f.push("🌿 Natural");
+  const pv = PRIO_VIN[w[I.R]] || [];
+  if (pv.includes(w[I.V])) f.push("✦ " + w[I.V]);
+  if (w[I.N].toLowerCase().includes("grand cru")) f.push("👑 GC");
+  return f;
+}
+
+function totalBt() { return state.cellar.reduce((s,w)=>s+w[I.Q],0); }
+function totalVal() { return state.cellar.reduce((s,w)=>s+w[I.P]*w[I.Q],0); }
+function byRegion(r) { return state.cellar.filter(w=>w[I.R]===r).reduce((s,w)=>s+w[I.Q],0); }
+function byWindow(wn) { return state.cellar.filter(w=>w[I.W]===wn).reduce((s,w)=>s+w[I.Q],0); }
+function gcBt() { return state.cellar.filter(w=>w[I.N].toLowerCase().includes("grand cru")).reduce((s,w)=>s+w[I.Q],0); }
+
+function filtered() {
+  return state.cellar.filter(w => {
+    if (state.fRegion !== "All" && w[I.R] !== state.fRegion) return false;
+    if (state.fWindow !== "All" && w[I.W] !== state.fWindow) return false;
+    if (state.fColour !== "All" && w[I.C] !== state.fColour) return false;
+    if (state.search && !w[I.N].toLowerCase().includes(state.search.toLowerCase()) && !w[I.V].includes(state.search)) return false;
+    return true;
+  }).sort((a,b) => {
+    if (state.sort==="vintage") return b[I.V].localeCompare(a[I.V]);
+    if (state.sort==="value") return (b[I.P]*b[I.Q])-(a[I.P]*a[I.Q]);
+    if (state.sort==="name") return a[I.N].localeCompare(b[I.N]);
+    return a[I.R].localeCompare(b[I.R]) || a[I.N].localeCompare(b[I.N]);
+  });
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+
+  // Detail overlay
+  if (state.detail) {
+    const w = state.detail;
+    const wc = WC[w[I.W]] || WC["Cellar"];
+    const fl = flags(w);
+    const d = document.createElement("div");
+    d.className = "detail-overlay";
+    d.innerHTML = `
+      <div style="max-width:460px;margin:0 auto">
+        <button onclick="back()" style="color:#666;font-size:13px;margin-bottom:16px">← Back</button>
+        <div style="background:#111;border-radius:16px;padding:20px;border:.5px solid #222">
+          <div style="font-size:17px;color:#ede7db;line-height:1.3;margin-bottom:6px">${w[I.N]}</div>
+          <div style="font-size:13px;color:#555;margin-bottom:14px">${w[I.V]} · ${w[I.R]} · ${w[I.S]}</div>
+          ${fl.length ? `<div style="margin-bottom:14px">${fl.map(f=>`<span class="flag">${f}</span>`).join("")}</div>` : ""}
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+            ${[["Bottles","×"+w[I.Q]],["Price/bt","$"+w[I.P].toLocaleString()],["Total","$"+(w[I.P]*w[I.Q]).toLocaleString()],["Window",w[I.W]]].map(([l,v])=>`
+              <div style="background:#0d0d0d;border-radius:8px;padding:8px 10px">
+                <div style="font-size:10px;color:#444;letter-spacing:1px;margin-bottom:2px">${l}</div>
+                <div style="font-size:13px;color:#ede7db">${v}</div>
+              </div>`).join("")}
+          </div>
+          <div style="border-top:.5px solid #1a1a1a;padding-top:14px">
+            <div style="font-size:10px;color:#444;letter-spacing:2px;margin-bottom:10px">LOG A BOTTLE</div>
+            <div style="display:flex;gap:4px;margin-bottom:10px">
+              ${[1,2,3,4,5].map(n=>`<span class="star ${state.rating>=n?'on':''}" onclick="setRating(${n})">★</span>`).join("")}
+              <span style="font-size:12px;color:#555;margin-left:6px;align-self:center">${state.rating ? state.rating+"★" : "tap to rate"}</span>
+            </div>
+            <input id="dnotes" placeholder="Tasting notes..." value="${state.dNotes}" oninput="state.dNotes=this.value" style="margin-bottom:10px">
+            <button onclick="removeOne()" style="width:100%;padding:12px;border-radius:10px;background:#ede7db;color:#0a0a0a;font-size:13px;font-weight:500">
+              Remove bottle & log
+            </button>
+          </div>
+        </div>
+      </div>`;
+    app.appendChild(d);
+    return;
+  }
+
+  // Header
+  const hdr = document.createElement("div");
+  hdr.className = "hdr";
+  hdr.innerHTML = `<div style="font-size:22px;font-weight:300;letter-spacing:-.5px">Cuvée</div><div style="font-size:11px;color:#444">${totalBt()} bottles · $${Math.round(totalVal()/1000)}k</div>`;
+  app.appendChild(hdr);
+
+  const main = document.createElement("div");
+  main.className = "sec";
+
+  // ── DASHBOARD ──
+  if (state.tab === "dashboard") {
+    const tb = totalBt(), tv = totalVal(), gc = gcBt();
+    const gcPct = Math.round(gc/tb*100);
+    const burg = byRegion("Burgundy"), pied = byRegion("Piedmont");
+    const dn = byWindow("Drink now"), ds = byWindow("Drink soon"), cel = byWindow("Cellar"), hold = byWindow("Hold 10+ yrs");
+    const by1983 = state.cellar.filter(w=>w[I.V]===BIRTH).reduce((s,w)=>s+w[I.Q],0);
+
+    main.innerHTML = `
+      <div style="height:16px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
+        <div class="stat"><div class="v">${tb}</div><div class="l">BOTTLES</div></div>
+        <div class="stat"><div class="v">$${Math.round(tv/1000)}k</div><div class="l">VALUE</div></div>
+        <div class="stat"><div class="v">${gcPct}%</div><div class="l">GRAND CRU</div></div>
+        <div class="stat"><div class="v">${by1983}</div><div class="l">BIRTH YEAR</div></div>
+      </div>
+
+      <span class="lbl">DRINK WINDOW</span>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px">
+        ${[["Drink now",dn],["Drink soon",ds],["Cellar",cel],["Hold 10+ yrs",hold]].map(([l,n])=>{
+          const c = WC[l];
+          return `<div style="background:${c.bg};border:.5px solid ${c.bd};border-radius:10px;padding:10px 12px">
+            <div style="font-size:22px;color:${c.tx};font-weight:300">${n}</div>
+            <div style="font-size:10px;color:${c.tx};opacity:.7;margin-top:2px">${l}</div>
+          </div>`;
+        }).join("")}
+      </div>
+
+      <span class="lbl">BY REGION</span>
+      <div style="background:#111;border-radius:12px;padding:14px 16px;margin-bottom:20px;border:.5px solid #1a1a1a">
+        ${Object.entries(RC).map(([r,c])=>{
+          const n = byRegion(r);
+          if (!n) return "";
+          return `<div class="bar-row">
+            <span style="font-size:12px;color:#aaa;min-width:84px">${r}</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/burg*100)}%;background:${c}"></div></div>
+            <span style="font-size:11px;color:#444;min-width:28px;text-align:right">${n}</span>
+          </div>`;
+        }).join("")}
+      </div>
+
+      <span class="lbl">COLLECTION BALANCE</span>
+      <div style="background:#111;border-radius:12px;padding:14px 16px;margin-bottom:20px;border:.5px solid #1a1a1a">
+        ${[
+          ["Burgundy share", Math.round(burg/tb*100)+"%", "40–50%", burg/tb > 0.35],
+          ["Piedmont share", Math.round(pied/tb*100)+"%", "25–35%", pied/tb > 0.2],
+          ["Grand Cru ratio", gcPct+"%", ">30%", gcPct >= 30],
+          ["Drink now pressure", dn+"bt", "<150bt", dn < 150],
+        ].map(([l,v,t,ok])=>`
+          <div class="bal-row">
+            <span style="font-size:12px;color:#888">${l}</span>
+            <div>
+              <span style="font-size:13px;color:${ok?"#5dbf7a":"#e2884a"}">${v}</span>
+              <span style="font-size:10px;color:#333;margin-left:6px">target ${t}</span>
+            </div>
+          </div>`).join("")}
+      </div>
+
+      <span class="lbl">OPEN SOON</span>
+      <div style="background:#111;border-radius:12px;padding:12px 16px;border:.5px solid #2a1010;margin-bottom:20px">
+        ${state.cellar.filter(w=>w[I.W]==="Drink now"&&w[I.C]==="Red").sort((a,b)=>a[I.V].localeCompare(b[I.V])).slice(0,6).map(w=>`
+          <div onclick="openDetail(${w[I.ID]})" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:.5px solid #151515;cursor:pointer">
+            <span style="font-size:12px;color:#ccc;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px">${w[I.N]}</span>
+            <span style="font-size:12px;color:#e24b4a;flex-shrink:0">${w[I.V]} ×${w[I.Q]}</span>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  // ── CELLAR ──
+  else if (state.tab === "cellar") {
+    const regions = ["All", ...new Set(state.cellar.map(w=>w[I.R]))];
+    const windows = ["All","Drink now","Drink soon","Cellar","Hold 10+ yrs"];
+    const sorts = [["region","Region"],["name","Name"],["vintage","Vintage"],["value","Value"]];
+    const fil = filtered();
+
+    main.innerHTML = `
+      <div style="height:14px"></div>
+      <input placeholder="Search producer, vintage..." value="${state.search}" oninput="setSearch(this.value)" style="margin-bottom:10px">
+      <div class="pills" style="margin-bottom:8px">
+        ${regions.map(r=>`<button class="pill ${state.fRegion===r?'on':''}" onclick="setFR('${r}')">${r}</button>`).join("")}
+      </div>
+      <div class="pills" style="margin-bottom:8px">
+        ${windows.map(w=>`<button class="pill ${state.fWindow===w?'on':''}" onclick="setFW('${w.replace(/'/g,"\'")}')">${w}</button>`).join("")}
+      </div>
+      <div class="pills" style="margin-bottom:12px">
+        ${sorts.map(([v,l])=>`<button class="pill ${state.sort===v?'on':''}" onclick="setSort('${v}')">${l}</button>`).join("")}
+      </div>
+      <div style="font-size:11px;color:#333;margin-bottom:10px">${fil.length} wines · ${fil.reduce((s,w)=>s+w[I.Q],0)} bottles</div>
+      <div id="wine-list"></div>`;
+
+    const list = main.querySelector("#wine-list");
+    fil.forEach(w => {
+      const rc = RC[w[I.R]] || "#666";
+      const fl = flags(w);
+      const wc = WC[w[I.W]] || WC["Cellar"];
+      const el = document.createElement("div");
+      el.className = "card";
+      el.style.borderLeft = `2px solid ${rc}`;
+      el.style.cursor = "pointer";
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;color:#ede7db;font-weight:500;line-height:1.3;margin-bottom:4px">${w[I.N]}</div>
+            <div style="font-size:11px;color:#555">${w[I.V]} <span style="color:#444">·</span> <span style="color:${rc}">${w[I.R]}</span>${w[I.S]!=="750ml"?` <span style="font-size:10px;color:#444;background:#1a1a1a;padding:1px 5px;border-radius:3px">${w[I.S]}</span>`:""}</div>
+            ${fl.length?`<div style="margin-top:5px">${fl.map(f=>`<span class="flag">${f}</span>`).join("")}</div>`:""}
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:13px;font-weight:500;color:${wc.tx}">×${w[I.Q]}</div>
+            <div style="font-size:10px;color:#333;margin-top:2px">$${w[I.P].toLocaleString()}</div>
+            <div style="width:6px;height:6px;border-radius:50%;background:${wc.tx};margin-left:auto;margin-top:6px"></div>
+          </div>
+        </div>`;
+      el.onclick = () => openDetail(w[I.ID]);
+      list.appendChild(el);
+    });
+  }
+
+  // ── INTELLIGENCE ──
+  else if (state.tab === "intel") {
+    const by83 = state.cellar.filter(w=>w[I.V]===BIRTH);
+    const gaps = [
+      ["DRC", w => w[I.N].includes("Romanee-Conti") || w[I.N].includes("DRC")],
+      ["Leroy Grand Cru", w => w[I.N].includes("Leroy") && w[I.N].toLowerCase().includes("grand cru")],
+      ["Roumier Bonnes-Mares", w => w[I.N].includes("Roumier") && w[I.N].includes("Bonnes")],
+      ["Mugnier Musigny", w => w[I.N].includes("Mugnier") && w[I.N].includes("Musigny")],
+      ["Giuseppe Rinaldi", w => w[I.N].toLowerCase().includes("rinaldi")],
+      ["Liger-Belair La Romanée", w => w[I.N].includes("Liger") && w[I.N].includes("Roman")],
+      ["Aldo Conterno Granbussia", w => w[I.N].includes("Aldo Conterno")],
+    ];
+
+    const dn = byWindow("Drink now");
+    const gcP = Math.round(gcBt()/totalBt()*100);
+    const piedP = Math.round(byRegion("Piedmont")/totalBt()*100);
+
+    main.innerHTML = `
+      <div style="height:16px"></div>
+      
+      <span class="lbl">🎂 BIRTH YEAR — 1983</span>
+      <div style="background:#111;border-radius:12px;padding:12px 16px;border:.5px solid #1a1a1a;margin-bottom:20px">
+        ${by83.length===0 ? '<div style="font-size:12px;color:#333">None in cellar</div>' :
+          by83.map(w=>`<div onclick="openDetail(${w[I.ID]})" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:.5px solid #151515;cursor:pointer">
+            <span style="font-size:12px;color:#ccc">${w[I.N]}</span>
+            <span style="font-size:12px;color:#ede7db">×${w[I.Q]}</span>
+          </div>`).join("")}
+      </div>
+
+      <span class="lbl">PRIORITY GAPS</span>
+      <div style="background:#111;border-radius:12px;padding:12px 16px;border:.5px solid #1a1a1a;margin-bottom:20px">
+        ${gaps.map(([name, fn]) => {
+          const n = state.cellar.filter(fn).reduce((s,w)=>s+w[I.Q],0);
+          const col = n===0?"#e24b4a":n<3?"#ef9f27":"#5dbf7a";
+          return `<div class="bal-row">
+            <span style="font-size:12px;color:#999">${name}</span>
+            <span style="font-size:13px;color:${col}">${n===0?"None":n+"bt"}</span>
+          </div>`;
+        }).join("")}
+      </div>
+
+      <span class="lbl">BUYING ADVICE</span>
+      <div style="background:#111;border-radius:12px;padding:14px 16px;border:.5px solid #1a1a1a;margin-bottom:20px">
+        ${[
+          [gcP < 30, "🔴", `Grand Cru ratio is ${gcP}% — below 30% target. Grand Crus only until it improves.`],
+          [gcP >= 30, "🟢", `Grand Cru ratio is ${gcP}% — on target. 1er Cru exceptions permitted for priority producers.`],
+          [piedP > 30, "🟡", `Piedmont is ${piedP}% of cellar. Ease Piedmont buying pace for now.`],
+          [dn > 130, "🟡", `${dn} bottles in Drink Now. Open 2–3 per week.`],
+          [true, "🔵", "Leroy Grand Cru and Roumier Bonnes-Mares remain highest priority Burgundy gaps."],
+          [true, "🔵", "Giuseppe Rinaldi is the most urgent Piedmont gap."],
+        ].filter(([show])=>show).map(([,ic,msg])=>`
+          <div style="display:flex;gap:10px;padding:8px 0;border-bottom:.5px solid #151515">
+            <span style="flex-shrink:0">${ic}</span>
+            <span style="font-size:12px;color:#aaa;line-height:1.5">${msg}</span>
+          </div>`).join("")}
+      </div>
+
+      <span class="lbl">NATURAL PRODUCERS</span>
+      <div style="background:#111;border-radius:12px;padding:12px 16px;border:.5px solid #1a1a1a;margin-bottom:20px">
+        ${state.cellar.filter(w=>NATURAL.some(p=>w[I.N].includes(p))).map(w=>`
+          <div onclick="openDetail(${w[I.ID]})" style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:.5px solid #151515;cursor:pointer">
+            <span style="font-size:12px;color:#ccc">${w[I.N]} <span style="color:#444">${w[I.V]}</span></span>
+            <span style="font-size:12px;color:#5dbf7a">×${w[I.Q]}</span>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  // ── DRUNK ──
+  else if (state.tab === "drunk") {
+    if (state.drunk.length === 0) {
+      main.innerHTML = `<div style="text-align:center;color:#333;font-size:13px;margin-top:60px;line-height:2">No bottles logged yet.<br>Open a wine from your cellar and rate it.</div>`;
+    } else {
+      main.innerHTML = state.drunk.map(d=>`
+        <div class="card" style="margin-top:8px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:13px;color:#ede7db;flex:1;min-width:0;margin-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.name}</span>
+            <span style="font-size:13px;color:#ede7db;flex-shrink:0">${"★".repeat(d.rating)}${"☆".repeat(5-d.rating)}</span>
+          </div>
+          <div style="font-size:11px;color:#444">${d.vintage} · ${d.date}</div>
+          ${d.notes?`<div style="font-size:12px;color:#666;margin-top:6px">${d.notes}</div>`:""}
+        </div>`).join("");
+    }
+    const h = document.createElement("div"); h.style.height = "16px";
+    main.prepend(h);
+  }
+
+  app.appendChild(main);
+
+  // Nav
+  const nav = document.createElement("div");
+  nav.className = "nav";
+  [["dashboard","◉","Overview"],["cellar","▦","Cellar"],["intel","◈","Intel"],["drunk","◎","Drunk"]].forEach(([id,ic,lb])=>{
+    const b = document.createElement("button");
+    b.className = "navbtn" + (state.tab===id?" on":"");
+    b.innerHTML = `<div class="ic">${ic}</div><div>${lb}</div>`;
+    b.onclick = () => { state.tab=id; render(); };
+    nav.appendChild(b);
+  });
+  app.appendChild(nav);
+}
+
+// ── Actions ──────────────────────────────────────────────────────────────────
+function setSearch(v) { state.search=v; render(); }
+function setFR(v) { state.fRegion=v; render(); }
+function setFW(v) { state.fWindow=v; render(); }
+function setSort(v) { state.sort=v; render(); }
+function setRating(n) { state.rating=n; render(); }
+function back() { state.detail=null; state.rating=0; state.dNotes=""; render(); }
+
+function openDetail(id) {
+  state.detail = state.cellar.find(w=>w[I.ID]===id);
+  state.rating = 0; state.dNotes = "";
+  render();
+}
+
+function removeOne() {
+  const w = state.detail;
+  if (!w) return;
+  state.cellar = state.cellar.map(x => x[I.ID]===w[I.ID] ? [...x.slice(0,I.Q), x[I.Q]-1, ...x.slice(I.Q+1)] : x).filter(x=>x[I.Q]>0);
+  if (state.rating) {
+    state.drunk.unshift({
+      name: w[I.N], vintage: w[I.V],
+      rating: state.rating, notes: state.dNotes,
+      date: new Date().toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})
+    });
+  }
+  state.detail=null; state.rating=0; state.dNotes="";
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

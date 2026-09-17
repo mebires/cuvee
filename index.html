@@ -58,7 +58,7 @@ const WC={
   "Cellar":{bg:"#0a1f2d",bd:"#205a8b",tx:"#4a9fe2"},
   "Hold 10+ yrs":{bg:"#0a0a2d",bd:"#20208b",tx:"#7a7ae2"}
 };
-const CC={Red:{c:"#c0392b",e:"🍷"},White:{c:"#c9a84c",e:"🥂"},Sparkling:{c:"#7fb3d3",e:"🫧"},Orange:{c:"#e67e22",e:"🟠"},"Rosé":{c:"#e8a0a0",e:"🌸"}};
+const CC={Red:{c:"#c0392b"},White:{c:"#c9a84c"},Sparkling:{c:"#7fb3d3"},Orange:{c:"#e67e22"},"Rosé":{c:"#e8a0a0"}};
 function byColour(c) { return state.cellar.filter(w=>w[I.C]===c).reduce((s,w)=>s+w[I.Q],0); }
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -195,8 +195,8 @@ function render() {
         ${Object.entries(CC).map(([c,cfg])=>{
           const n = byColour(c);
           if (!n) return "";
-          return `<div onclick="state.fColour='${c}';state.tab='cellar';render()" style="background:#111;border:.5px solid ${cfg.c}44;border-radius:12px;padding:12px 14px;min-width:82px;text-align:center;cursor:pointer;flex-shrink:0">
-            <div style="font-size:18px;margin-bottom:3px">${cfg.e}</div>
+          return `<div onclick="state.fColour='${c}';state.tab='cellar';render()" style="background:#111;border:.5px solid ${cfg.c}55;border-radius:12px;padding:12px 14px;min-width:82px;text-align:center;cursor:pointer;flex-shrink:0">
+            <div style="width:10px;height:10px;border-radius:50%;background:${cfg.c};margin:0 auto 6px"></div>
             <div style="font-size:9px;color:${cfg.c};letter-spacing:1px;text-transform:uppercase">${c}</div>
             <div style="font-size:16px;color:#ede7db;margin-top:2px">${n}</div>
           </div>`;
@@ -255,6 +255,14 @@ function render() {
       <input placeholder="Search producer, vintage..." value="${state.search}" oninput="setSearch(this.value)" style="margin-bottom:10px">
       <div class="pills" style="margin-bottom:8px">
         ${regions.map(r=>`<button class="pill ${state.fRegion===r?'on':''}" onclick="setFR('${r}')">${r}</button>`).join("")}
+      </div>
+      <div class="pills" style="margin-bottom:8px">
+        <button class="pill ${state.fColour==='All'?'on':''}" onclick="setFC('All')">All</button>
+        ${Object.entries(CC).map(([c,cfg])=>{
+          const n = byColour(c);
+          if (!n) return "";
+          return `<button class="pill ${state.fColour===c?'on':''}" onclick="setFC('${c}')" style="${state.fColour===c?`background:${cfg.c};border-color:${cfg.c};color:#0a0a0a`:''}">${c}</button>`;
+        }).join("")}
       </div>
       <div class="pills" style="margin-bottom:8px">
         ${windows.map(w=>`<button class="pill ${state.fWindow===w?'on':''}" onclick="setFW('${w.replace(/'/g,"\'")}')">${w}</button>`).join("")}

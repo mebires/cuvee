@@ -58,6 +58,8 @@ const WC={
   "Cellar":{bg:"#0a1f2d",bd:"#205a8b",tx:"#4a9fe2"},
   "Hold 10+ yrs":{bg:"#0a0a2d",bd:"#20208b",tx:"#7a7ae2"}
 };
+const CC={Red:{c:"#c0392b",e:"🍷"},White:{c:"#c9a84c",e:"🥂"},Sparkling:{c:"#7fb3d3",e:"🫧"},Orange:{c:"#e67e22",e:"🟠"},"Rosé":{c:"#e8a0a0",e:"🌸"}};
+function byColour(c) { return state.cellar.filter(w=>w[I.C]===c).reduce((s,w)=>s+w[I.Q],0); }
 
 // ── State ─────────────────────────────────────────────────────────────────────
 let state = {
@@ -184,6 +186,19 @@ function render() {
           return `<div style="background:${c.bg};border:.5px solid ${c.bd};border-radius:10px;padding:10px 12px">
             <div style="font-size:22px;color:${c.tx};font-weight:300">${n}</div>
             <div style="font-size:10px;color:${c.tx};opacity:.7;margin-top:2px">${l}</div>
+          </div>`;
+        }).join("")}
+      </div>
+
+      <span class="lbl">BY COLOUR</span>
+      <div class="pills" style="margin-bottom:20px;gap:8px">
+        ${Object.entries(CC).map(([c,cfg])=>{
+          const n = byColour(c);
+          if (!n) return "";
+          return `<div onclick="state.fColour='${c}';state.tab='cellar';render()" style="background:#111;border:.5px solid ${cfg.c}44;border-radius:12px;padding:12px 14px;min-width:82px;text-align:center;cursor:pointer;flex-shrink:0">
+            <div style="font-size:18px;margin-bottom:3px">${cfg.e}</div>
+            <div style="font-size:9px;color:${cfg.c};letter-spacing:1px;text-transform:uppercase">${c}</div>
+            <div style="font-size:16px;color:#ede7db;margin-top:2px">${n}</div>
           </div>`;
         }).join("")}
       </div>
@@ -382,6 +397,7 @@ function render() {
 function setSearch(v) { state.search=v; render(); }
 function setFR(v) { state.fRegion=v; render(); }
 function setFW(v) { state.fWindow=v; render(); }
+function setFC(v) { state.fColour=v; render(); }
 function setSort(v) { state.sort=v; render(); }
 function setRating(n) { state.rating=n; render(); }
 function back() { state.detail=null; state.rating=0; state.dNotes=""; render(); }

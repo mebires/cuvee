@@ -69,6 +69,7 @@ let state = {
   fWindow: "All",
   fColour: "All",
   sort: "region",
+  sortDir: "desc",
   cellar: RAW.map(r => [...r]),
   drunk: [],
   detail: null,
@@ -103,8 +104,10 @@ function filtered() {
     if (state.search && !w[I.N].toLowerCase().includes(state.search.toLowerCase()) && !w[I.V].includes(state.search)) return false;
     return true;
   }).sort((a,b) => {
-    if (state.sort==="vintage") return b[I.V].localeCompare(a[I.V]);
-    if (state.sort==="value") return (b[I.P]*b[I.Q])-(a[I.P]*a[I.Q]);
+    const d = state.sortDir==="desc" ? 1 : -1;
+    if (state.sort==="vintage") return d * b[I.V].localeCompare(a[I.V]);
+    if (state.sort==="value") return d * ((b[I.P]*b[I.Q])-(a[I.P]*a[I.Q]));
+    if (state.sort==="price") return d * (b[I.P]-a[I.P]);
     if (state.sort==="name") return a[I.N].localeCompare(b[I.N]);
     return a[I.R].localeCompare(b[I.R]) || a[I.N].localeCompare(b[I.N]);
   });
@@ -156,7 +159,7 @@ function render() {
   // Header
   const hdr = document.createElement("div");
   hdr.className = "hdr";
-  hdr.innerHTML = `<div style="font-size:22px;font-weight:300;letter-spacing:-.5px">Cuvée</div><div style="font-size:11px;color:#444">${totalBt()} bottles · $${Math.round(totalVal()/1000)}k</div>`;
+  hdr.innerHTML = `<div style="font-size:22px;font-weight:300;letter-spacing:-.5px">Cuvée</div><div style="font-size:11px;color:#777">${totalBt()} bottles · $${Math.round(totalVal()/1000)}k</div>`;
   app.appendChild(hdr);
 
   const main = document.createElement("div");
@@ -247,7 +250,7 @@ function render() {
   else if (state.tab === "cellar") {
     const regions = ["All", ...new Set(state.cellar.map(w=>w[I.R]))];
     const windows = ["All","Drink now","Drink soon","Cellar","Hold 10+ yrs"];
-    const sorts = [["region","Region"],["name","Name"],["vintage","Vintage"],["value","Value"]];
+    const sorts = [["region","Region"],["name","Name"],["vintage","Vintage"],["value","Value"],["price","Price/bt"]];
     const fil = filtered();
 
     main.innerHTML = `
@@ -268,9 +271,13 @@ function render() {
         ${windows.map(w=>`<button class="pill ${state.fWindow===w?'on':''}" onclick="setFW('${w.replace(/'/g,"\'")}')">${w}</button>`).join("")}
       </div>
       <div class="pills" style="margin-bottom:12px">
-        ${sorts.map(([v,l])=>`<button class="pill ${state.sort===v?'on':''}" onclick="setSort('${v}')">${l}</button>`).join("")}
+        ${sorts.map(([v,l])=>{
+          const active = state.sort===v;
+          const dirArrow = (v==="vintage"||v==="value"||v==="price") && active ? (state.sortDir==="desc" ? " ↓" : " ↑") : "";
+          return `<button class="pill ${active?'on':''}" onclick="setSort('${v}')">${l}${dirArrow}</button>`;
+        }).join("")}
       </div>
-      <div style="font-size:11px;color:#333;margin-bottom:10px">${fil.length} wines · ${fil.reduce((s,w)=>s+w[I.Q],0)} bottles</div>
+      <div style="font-size:11px;color:#666;margin-bottom:10px">${fil.length} wines · ${fil.reduce((s,w)=>s+w[I.Q],0)} bottles</div>
       <div id="wine-list"></div>`;
 
     const list = main.querySelector("#wine-list");
@@ -291,7 +298,7 @@ function render() {
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-size:13px;font-weight:500;color:${wc.tx}">×${w[I.Q]}</div>
-            <div style="font-size:10px;color:#333;margin-top:2px">$${w[I.P].toLocaleString()}</div>
+            <div style="font-size:11px;color:#777;margin-top:2px">$${w[I.P].toLocaleString()}</div>
             <div style="width:6px;height:6px;border-radius:50%;background:${wc.tx};margin-left:auto;margin-top:6px"></div>
           </div>
         </div>`;
@@ -406,7 +413,14 @@ function setSearch(v) { state.search=v; render(); }
 function setFR(v) { state.fRegion=v; render(); }
 function setFW(v) { state.fWindow=v; render(); }
 function setFC(v) { state.fColour=v; render(); }
-function setSort(v) { state.sort=v; render(); }
+function setSort(v) {
+  if (state.sort===v && (v==="vintage"||v==="value"||v==="price")) {
+    state.sortDir = state.sortDir==="desc" ? "asc" : "desc";
+  } else {
+    state.sort=v; state.sortDir="desc";
+  }
+  render();
+}
 function setRating(n) { state.rating=n; render(); }
 function back() { state.detail=null; state.rating=0; state.dNotes=""; render(); }
 
